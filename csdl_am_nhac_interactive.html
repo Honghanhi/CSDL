@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSDL Âm Nhạc – Phiên bản Chi Tiết v2</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg: #0a0e1a;
+  --bg2: #111827;
+  --bg3: #1a2235;
+  --bg4: #202840;
+  --border: #253045;
+  --border2: #344060;
+
+  --blue:   #60b4ff;
+  --blue-dim: #1a3f70;
+  --blue-bg: #091d40;
+  --green:  #3fdfaa;
+  --green-dim: #104030;
+  --green-bg: #061f18;
+  --amber:  #ffc93c;
+  --amber-dim: #50330a;
+  --amber-bg: #2a1a00;
+  --purple: #b89aff;
+  --purple-dim: #302060;
+  --purple-bg: #180e38;
+  --pink:   #ff7ec7;
+  --pink-dim: #4a1535;
+  --pink-bg: #280818;
+  --cyan:   #22e8ff;
+  --cyan-dim: #083545;
+  --cyan-bg: #041e28;
+  --orange: #ff9f4a;
+  --orange-dim: #4a2510;
+  --orange-bg: #261408;
+
+  --text: #e8edf5;
+  --text2: #9aafc8;
+  --text3: #4a6080;
+  --text4: #6a8aaa;
+
+  --font: 'Be Vietnam Pro', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+  --r: 10px;
+  --r-sm: 6px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; overflow: hidden; }
+
+/* ── LAYOUT ── */
+.app { display: flex; flex-direction: column; height: 100vh; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 18px;
+  background: linear-gradient(90deg, #0d1525, #111827);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  gap: 12px;
+}
+.topbar-left { display: flex; flex-direction: column; }
+.topbar-title { font-size: 15px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+.topbar-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.topbar-pills { display: flex; gap: 6px; align-items: center; }
+.pill {
+  font-size: 10px; color: var(--text4); background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px;
+  font-weight: 500;
+}
+.pill.blue { background: var(--blue-bg); border-color: var(--blue-dim); color: var(--blue); }
+
+/* ── MAIN ── */
+.main { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+
+/* ── CANVAS ── */
+.canvas-wrap { flex: 1; position: relative; overflow: hidden; min-width: 0; }
+.canvas-area {
+  position: relative; width: 100%; height: 100%;
+  background:
+    radial-gradient(ellipse at 15% 25%, rgba(96,180,255,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 75%, rgba(184,154,255,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 50%, rgba(34,232,255,0.03) 0%, transparent 60%),
+    var(--bg);
+  overflow: hidden; user-select: none;
+}
+.canvas-area::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(37,48,69,0.8) 1px, transparent 1px);
+  background-size: 32px 32px; opacity: 0.5; pointer-events: none;
+}
+
+/* ── TABLE CARDS ── */
+.table-card {
+  position: absolute; background: var(--bg2);
+  border: 1.5px solid var(--border); border-radius: var(--r);
+  min-width: 220px; cursor: grab;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+}
+.table-card:active { cursor: grabbing; }
+.table-card.selected { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(96,180,255,0.2), 0 6px 24px rgba(0,0,0,0.5); }
+.table-card.highlighted { border-color: var(--green); box-shadow: 0 0 0 3px rgba(63,223,170,0.15), 0 6px 24px rgba(0,0,0,0.5); }
+
+.table-header {
+  padding: 9px 13px 8px; border-radius: calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0;
+  font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 8px;
+  cursor: grab; letter-spacing: -0.2px;
+}
+.th-blue   { background: var(--blue-bg);   color: var(--blue);   border-bottom: 1px solid var(--blue-dim); }
+.th-green  { background: var(--green-bg);  color: var(--green);  border-bottom: 1px solid var(--green-dim); }
+.th-amber  { background: var(--amber-bg);  color: var(--amber);  border-bottom: 1px solid var(--amber-dim); }
+.th-purple { background: var(--purple-bg); color: var(--purple); border-bottom: 1px solid var(--purple-dim); }
+.th-pink   { background: var(--pink-bg);   color: var(--pink);   border-bottom: 1px solid var(--pink-dim); }
+.th-cyan   { background: var(--cyan-bg);   color: var(--cyan);   border-bottom: 1px solid var(--cyan-dim); }
+.th-orange { background: var(--orange-bg); color: var(--orange); border-bottom: 1px solid var(--orange-dim); }
+
+.table-header .tbl-icon { font-size: 15px; }
+.table-header .tbl-name { flex: 1; }
+.table-header .row-count { font-size: 10px; font-weight: 500; opacity: 0.55; font-family: var(--mono); }
+
+/* Type badge */
+.type-badge {
+  font-size: 9px; padding: 1px 6px; border-radius: 3px;
+  font-family: var(--mono); font-weight: 600;
+  background: rgba(255,255,255,0.07); color: var(--text3);
+  border: 1px solid var(--border);
+}
+
+/* Col header */
+.col-header-row {
+  display: flex; align-items: center; padding: 4px 13px;
+  border-bottom: 1.5px solid var(--border); gap: 4px;
+  background: rgba(255,255,255,0.025);
+}
+.col-head-item {
+  display: flex; align-items: center; gap: 3px; flex: 1;
+  font-size: 9px; color: var(--text3); font-family: var(--mono);
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px;
+}
+
+/* Data rows */
+.table-row {
+  display: flex; align-items: center; padding: 5px 13px;
+  border-bottom: 1px solid rgba(37,48,69,0.6);
+  font-size: 11px; gap: 4px; cursor: pointer;
+  transition: background 0.1s;
+  font-family: var(--mono);
+}
+.table-row:last-child { border-bottom: none; }
+.table-row:hover { background: rgba(255,255,255,0.04); }
+.table-row.active-row { background: rgba(96,180,255,0.12); }
+
+.cell-val {
+  flex: 1; color: var(--text); white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; min-width: 0;
+}
+.cell-val.pk-val { color: var(--amber); font-weight: 600; }
+.cell-val.fk-val { color: var(--cyan); }
+
+/* Badges */
+.badge {
+  font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 3px;
+  font-family: var(--mono); flex-shrink: 0; letter-spacing: 0.3px;
+}
+.pk { background: rgba(255,201,60,0.15); color: var(--amber); border: 1px solid rgba(255,201,60,0.35); }
+.fk { background: rgba(34,232,255,0.1); color: var(--cyan); border: 1px solid rgba(34,232,255,0.25); }
+.pkfk { background: rgba(184,154,255,0.12); color: var(--purple); border: 1px solid rgba(184,154,255,0.3); }
+
+/* ── SVG CONNECTORS ── */
+svg.connector-layer {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; overflow: visible;
+}
+
+/* ── LEGEND ── */
+.rel-badge {
+  position: absolute; bottom: 14px; left: 14px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 10px 14px;
+  font-size: 10.5px; color: var(--text2);
+  display: flex; flex-direction: column; gap: 6px;
+  z-index: 10; backdrop-filter: blur(8px);
+}
+.rel-badge-title {
+  font-size: 9px; font-weight: 700; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.9px;
+  padding-bottom: 4px; border-bottom: 1px solid var(--border);
+}
+.rel-item { display: flex; align-items: center; gap: 8px; }
+.rel-line-preview { width: 28px; height: 2.5px; border-radius: 1px; flex-shrink: 0; }
+.rel-from { color: var(--text); font-weight: 600; font-size: 10.5px; }
+.rel-arrow { color: var(--text3); font-size: 10px; }
+.rel-fk { font-family: var(--mono); font-size: 9.5px; }
+.rel-card { font-size: 9px; color: var(--text3); background: var(--bg3); padding: 1px 5px; border-radius: 3px; margin-left: auto; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 420px; flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  background: var(--bg2);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+.sql-tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  background: var(--bg); flex-shrink: 0;
+}
+.sql-tab {
+  padding: 10px 14px; font-size: 11.5px; font-weight: 600;
+  color: var(--text3); cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s; letter-spacing: -0.2px;
+  flex: 1; text-align: center;
+}
+.sql-tab:hover { color: var(--text2); background: rgba(255,255,255,0.02); }
+.sql-tab.active { color: var(--blue); border-bottom-color: var(--blue); background: var(--bg2); }
+
+.sql-content {
+  padding: 14px; flex: 1; overflow-y: auto; min-height: 0;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.sql-content::-webkit-scrollbar { width: 4px; }
+.sql-content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* Section labels */
+.section-label {
+  font-size: 9.5px; font-weight: 700; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 1px;
+  display: flex; align-items: center; gap: 6px;
+}
+.section-label::after { content:''; flex: 1; height:1px; background: var(--border); }
+
+/* Query buttons */
+.query-btns { display: flex; flex-wrap: wrap; gap: 5px; }
+.query-btn {
+  font-size: 11px; padding: 6px 11px;
+  border: 1px solid var(--border2); border-radius: var(--r-sm);
+  background: var(--bg3); color: var(--text2);
+  cursor: pointer; transition: all 0.15s;
+  font-family: var(--font); font-weight: 500;
+}
+.query-btn:hover { background: var(--bg4); color: var(--text); border-color: var(--border2); }
+.query-btn.active-btn { background: var(--blue-bg); border-color: var(--blue); color: var(--blue); }
+
+/* SQL code */
+.sql-code-wrap {
+  background: #07111f; border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 12px 14px;
+  position: relative; flex-shrink: 0;
+}
+.sql-code {
+  font-family: var(--mono); font-size: 12px; color: var(--text);
+  line-height: 1.85; white-space: pre-wrap;
+}
+.sql-tag {
+  font-size: 9px; font-weight: 600; background: var(--blue-dim); color: var(--blue);
+  padding: 2px 7px; border-radius: 3px;
+  position: absolute; top: 8px; right: 8px;
+  font-family: var(--mono); letter-spacing: 0.5px;
+}
+.kw  { color: #c792ea; font-weight: 600; }
+.tbl { color: var(--amber); }
+.col { color: var(--green); }
+.cmt { color: var(--text3); font-style: italic; }
+.str { color: #f78c6c; }
+.fn  { color: var(--cyan); }
+
+/* Explain box */
+.explain-box {
+  background: rgba(96,180,255,0.06); border: 1px solid var(--border);
+  border-left: 3px solid var(--blue); border-radius: var(--r-sm);
+  padding: 12px 14px; font-size: 12px; color: var(--text2); line-height: 1.75;
+}
+.explain-box strong { color: var(--text); }
+.explain-box .eg-tag {
+  display: inline-block; background: var(--amber-bg); color: var(--amber);
+  border: 1px solid var(--amber-dim); border-radius: 4px;
+  font-size: 10px; font-weight: 600; padding: 1px 7px; margin: 2px 2px;
+  font-family: var(--mono); vertical-align: middle;
+}
+
+/* Step trace */
+.step-trace { display: flex; flex-direction: column; gap: 7px; }
+.step-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 12px; color: var(--text2); line-height: 1.65;
+  padding: 10px 12px; background: var(--bg);
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  transition: border-color 0.15s;
+}
+.step-item:hover { border-color: var(--border2); }
+.step-num {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  color: #fff; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.step-title { font-weight: 700; color: var(--text); font-size: 12px; margin-bottom: 4px; }
+.step-text { font-size: 11.5px; }
+.step-item .code-inline {
+  font-family: var(--mono); font-size: 10.5px; background: var(--bg3);
+  padding: 1px 5px; border-radius: 3px; color: var(--amber);
+  border: 1px solid var(--border2);
+}
+
+/* Result table */
+.result-table-wrap { overflow-x: auto; }
+.result-table { width: 100%; border-collapse: collapse; font-size: 11.5px; white-space: nowrap; }
+.result-table th {
+  background: var(--bg3); padding: 7px 10px;
+  text-align: left; font-weight: 600; color: var(--text2);
+  border-bottom: 1.5px solid var(--border2);
+  font-family: var(--mono); font-size: 10.5px;
+  text-transform: uppercase; letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.result-table td {
+  padding: 6px 10px; border-bottom: 1px solid rgba(37,48,69,0.6);
+  color: var(--text); font-family: var(--mono); font-size: 11px;
+}
+.result-table tr:last-child td { border-bottom: none; }
+.result-table tr.hl td { background: rgba(96,180,255,0.1); }
+.result-meta { font-size: 10.5px; color: var(--text3); display: flex; align-items: center; gap: 6px; padding-top: 4px; }
+.result-meta::before { content: '↳'; color: var(--green); }
+
+/* ERD */
+.erd-links { display: flex; flex-direction: column; gap: 6px; }
+.erd-link-item {
+  padding: 10px 12px; background: var(--bg);
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  font-size: 11.5px;
+}
+.erd-link-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.erd-from { color: var(--amber); font-family: var(--mono); font-weight: 600; font-size: 12px; }
+.erd-arrow { color: var(--text3); font-family: var(--mono); font-size: 11px; }
+.erd-to { color: var(--cyan); font-family: var(--mono); font-weight: 600; font-size: 12px; }
+.erd-rel-badge { margin-left: auto; font-size: 9.5px; font-weight: 700; font-family: var(--mono); padding: 2px 7px; border-radius: 3px; }
+.erd-desc { font-size: 11px; color: var(--text3); line-height: 1.6; }
+.erd-example { font-size: 11px; color: var(--text2); background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 5px 9px; margin-top: 5px; line-height: 1.6; }
+
+/* Concept items */
+.concept-item {
+  padding: 10px 12px; background: var(--bg);
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+}
+.concept-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.concept-icon { font-size: 16px; }
+.concept-title { font-weight: 700; color: var(--text); font-size: 12px; }
+.concept-text { font-size: 11.5px; color: var(--text2); line-height: 1.65; }
+.concept-example { font-size: 11px; color: var(--text3); margin-top: 5px; line-height: 1.6; }
+.concept-example .em { color: var(--green); font-weight: 600; }
+
+/* Empty state */
+.empty-state {
+  text-align: center; padding: 30px 20px; color: var(--text3);
+  font-size: 12px; line-height: 1.9;
+}
+.empty-state .es-icon { font-size: 32px; margin-bottom: 10px; }
+.empty-state strong { color: var(--text2); }
+.empty-state .hint-list {
+  margin-top: 12px; text-align: left; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  padding: 10px 14px; font-size: 11px; color: var(--text2);
+  line-height: 2;
+}
+
+/* Highlighted badge */
+.hl-note {
+  background: rgba(63,223,170,0.08); border: 1px solid var(--green-dim);
+  border-left: 3px solid var(--green); border-radius: var(--r-sm);
+  padding: 8px 12px; font-size: 11.5px; color: var(--text2); line-height: 1.7;
+}
+.hl-note strong { color: var(--green); }
+
+/* Scroll indicator on tables */
+.table-card .scroll-hint {
+  font-size: 9px; color: var(--text3); text-align: center;
+  padding: 3px; background: var(--bg3); border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--r) var(--r);
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title">🎵 CSDL Âm Nhạc — Khám Phá Tương Tác Chi Tiết</div>
+      <div class="topbar-sub">Kéo bảng · Nhấn vào từng hàng để xem liên kết · Chọn câu lệnh SQL để khám phá</div>
+    </div>
+    <div class="topbar-pills">
+      <div class="pill blue">6 bảng</div>
+      <div class="pill">Quan hệ 1-N & N-N</div>
+      <div class="pill">Khoá chính · Khoá ngoại</div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- Canvas -->
+    <div class="canvas-wrap">
+      <div class="canvas-area" id="canvas">
+        <svg class="connector-layer" id="svg-layer">
+          <defs>
+            <marker id="arr-default" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M1 1L9 5L1 9" fill="none" stroke="context-stroke" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+        </svg>
+
+        <!-- Legend -->
+        <div class="rel-badge" id="rel-legend">
+          <div class="rel-badge-title">Ký hiệu quan hệ giữa bảng</div>
+          <div class="rel-item">
+            <div class="rel-line-preview" style="background:var(--amber);"></div>
+            <span class="rel-from">BanNhac</span>
+            <span class="rel-arrow">──Aid──▶</span>
+            <span class="rel-from" style="color:var(--blue);">NhacSi</span>
+            <span class="rel-card">N:1</span>
+          </div>
+          <div class="rel-item">
+            <div class="rel-line-preview" style="background:var(--cyan);"></div>
+            <span class="rel-from">BanNhac</span>
+            <span class="rel-arrow">──Gid──▶</span>
+            <span class="rel-from" style="color:var(--cyan);">TheLoai</span>
+            <span class="rel-card">N:1</span>
+          </div>
+          <div class="rel-item">
+            <div class="rel-line-preview" style="background:var(--pink);"></div>
+            <span class="rel-from">BanNhac</span>
+            <span class="rel-arrow">──AlbId─▶</span>
+            <span class="rel-from" style="color:var(--pink);">Album</span>
+            <span class="rel-card">N:1</span>
+          </div>
+          <div class="rel-item">
+            <div class="rel-line-preview" style="background:var(--purple);"></div>
+            <span class="rel-from">BanThuAm</span>
+            <span class="rel-arrow">──Mid──▶</span>
+            <span class="rel-from" style="color:var(--amber);">BanNhac</span>
+            <span class="rel-card">N:1</span>
+          </div>
+          <div class="rel-item">
+            <div class="rel-line-preview" style="background:var(--green);"></div>
+            <span class="rel-from">BanThuAm</span>
+            <span class="rel-arrow">──Sid──▶</span>
+            <span class="rel-from" style="color:var(--green);">CaSi</span>
+            <span class="rel-card">N:1</span>
+          </div>
+          <div style="margin-top:4px;padding-top:5px;border-top:1px solid var(--border);font-size:9.5px;color:var(--text3);display:flex;gap:12px;">
+            <span style="color:var(--text4);">━━ đang chọn</span>
+            <span>╌╌ không chọn</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sql-tabs">
+        <div class="sql-tab active" onclick="switchTab('query')">📝 SQL</div>
+        <div class="sql-tab" onclick="switchTab('steps')">🔍 Từng bước</div>
+        <div class="sql-tab" onclick="switchTab('schema')">🗺 ERD</div>
+        <div class="sql-tab" onclick="switchTab('result')">📊 Kết quả</div>
+      </div>
+      <div class="sql-content" id="sql-content"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATABASE DATA
+// ═══════════════════════════════════════════════
+const DB = {
+  NhacSi: {
+    color: 'blue', icon: '🎵', label: 'NhacSi',
+    desc: 'Lưu thông tin nhạc sĩ sáng tác',
+    cols: [
+      {name:'Aid',      type:'INT',          pk:true,  desc:'Mã nhạc sĩ (duy nhất)'},
+      {name:'TenNS',    type:'VARCHAR(100)',           desc:'Họ và tên nhạc sĩ'},
+      {name:'NamSinh',  type:'INT',                    desc:'Năm sinh'},
+      {name:'QuocTich', type:'CHAR(3)',                desc:'Mã quốc tịch'},
+    ],
+    rows: [
+      {Aid:1, TenNS:'Đỗ Nhuận',        NamSinh:1922, QuocTich:'VN'},
+      {Aid:2, TenNS:'Văn Cao',          NamSinh:1923, QuocTich:'VN'},
+      {Aid:3, TenNS:'Hoàng Việt',       NamSinh:1928, QuocTich:'VN'},
+      {Aid:4, TenNS:'Nguyễn Tài Tuệ',  NamSinh:1936, QuocTich:'VN'},
+      {Aid:5, TenNS:'Trịnh Công Sơn',  NamSinh:1939, QuocTich:'VN'},
+    ]
+  },
+  CaSi: {
+    color: 'green', icon: '🎤', label: 'CaSi',
+    desc: 'Lưu thông tin ca sĩ biểu diễn',
+    cols: [
+      {name:'Sid',          type:'CHAR(3)',  pk:true,  desc:'Mã ca sĩ (duy nhất)'},
+      {name:'TenCS',        type:'VARCHAR(100)',       desc:'Tên ca sĩ'},
+      {name:'GioiTinh',     type:'CHAR(1)',            desc:'M=Nam, F=Nữ'},
+      {name:'NamHoatDong',  type:'INT',                desc:'Năm bắt đầu hoạt động'},
+    ],
+    rows: [
+      {Sid:'TK', TenCS:'Trần Khánh',  GioiTinh:'M', NamHoatDong:1955},
+      {Sid:'LD', TenCS:'Lê Dung',     GioiTinh:'F', NamHoatDong:1970},
+      {Sid:'TN', TenCS:'Tân Nhân',    GioiTinh:'F', NamHoatDong:1952},
+      {Sid:'QH', TenCS:'Quốc Hương',  GioiTinh:'M', NamHoatDong:1956},
+      {Sid:'KL', TenCS:'Khánh Ly',    GioiTinh:'F', NamHoatDong:1962},
+    ]
+  },
+  TheLoai: {
+    color: 'cyan', icon: '🎼', label: 'TheLoai',
+    desc: 'Phân loại thể loại âm nhạc',
+    cols: [
+      {name:'Gid',   type:'INT',         pk:true, desc:'Mã thể loại (duy nhất)'},
+      {name:'TenTL', type:'VARCHAR(80)',           desc:'Tên thể loại'},
+      {name:'MoTa',  type:'TEXT',                  desc:'Mô tả thể loại'},
+    ],
+    rows: [
+      {Gid:1, TenTL:'Nhạc cách mạng', MoTa:'Thời kháng chiến'},
+      {Gid:2, TenTL:'Trữ tình',        MoTa:'Giai điệu nhẹ nhàng'},
+      {Gid:3, TenTL:'Dân ca',          MoTa:'Âm hưởng dân gian'},
+    ]
+  },
+  Album: {
+    color: 'pink', icon: '💽', label: 'Album',
+    desc: 'Tập hợp các bản nhạc thành album',
+    cols: [
+      {name:'AlbumId',      type:'INT',          pk:true, desc:'Mã album (duy nhất)'},
+      {name:'TenAlbum',     type:'VARCHAR(150)',           desc:'Tên album'},
+      {name:'NamPhatHanh',  type:'INT',                    desc:'Năm phát hành'},
+      {name:'NhaXB',        type:'VARCHAR(100)',            desc:'Nhà xuất bản'},
+    ],
+    rows: [
+      {AlbumId:1, TenAlbum:'Bài ca kháng chiến',    NamPhatHanh:1960, NhaXB:'Nhạc viện HN'},
+      {AlbumId:2, TenAlbum:'Tiếng hát sông Lô',     NamPhatHanh:1965, NhaXB:'Đài tiếng nói VN'},
+      {AlbumId:3, TenAlbum:'Nhạc Việt tuyển chọn',  NamPhatHanh:1975, NhaXB:'NXB Âm nhạc'},
+    ]
+  },
+  BanNhac: {
+    color: 'amber', icon: '🎹', label: 'BanNhac',
+    desc: 'Bảng trung tâm — lưu thông tin bản nhạc',
+    cols: [
+      {name:'Mid',    type:'CHAR(4)', pk:true,           desc:'Mã bản nhạc (duy nhất)'},
+      {name:'Aid',    type:'INT',     fk:'NhacSi',        desc:'FK → NhacSi.Aid'},
+      {name:'Gid',    type:'INT',     fk:'TheLoai',       desc:'FK → TheLoai.Gid'},
+      {name:'AlbumId',type:'INT',     fk:'Album',         desc:'FK → Album.AlbumId'},
+      {name:'TenBN',  type:'VARCHAR(150)',                 desc:'Tên bản nhạc'},
+      {name:'NamST',  type:'INT',                          desc:'Năm sáng tác'},
+    ],
+    rows: [
+      {Mid:'0001', Aid:1, Gid:1, AlbumId:1, TenBN:'Du kích sông Thao',       NamST:1949},
+      {Mid:'0002', Aid:2, Gid:1, AlbumId:2, TenBN:'Trường ca sông Lô',       NamST:1947},
+      {Mid:'0003', Aid:3, Gid:2, AlbumId:3, TenBN:'Tình ca',                  NamST:1956},
+      {Mid:'0004', Aid:4, Gid:3, AlbumId:3, TenBN:'Xa khơi',                  NamST:1957},
+      {Mid:'0005', Aid:1, Gid:1, AlbumId:1, TenBN:'Việt Nam quê hương tôi',  NamST:1949},
+      {Mid:'0006', Aid:2, Gid:1, AlbumId:2, TenBN:'Tiến về Hà Nội',          NamST:1949},
+      {Mid:'0007', Aid:5, Gid:2, AlbumId:3, TenBN:'Diễm xưa',                NamST:1960},
+    ]
+  },
+  BanThuAm: {
+    color: 'purple', icon: '💿', label: 'BanThuAm',
+    desc: 'Bảng trung gian — giải quyết quan hệ N-N giữa BanNhac và CaSi',
+    cols: [
+      {name:'Mid',      type:'CHAR(4)', pk:true, fk:'BanNhac', desc:'PK+FK → BanNhac.Mid'},
+      {name:'Sid',      type:'CHAR(3)', pk:true, fk:'CaSi',    desc:'PK+FK → CaSi.Sid'},
+      {name:'NamThu',   type:'INT',                              desc:'Năm thu âm'},
+      {name:'ChieuDai', type:'INT',                              desc:'Độ dài (giây)'},
+    ],
+    rows: [
+      {Mid:'0001', Sid:'TK', NamThu:1956, ChieuDai:245},
+      {Mid:'0001', Sid:'LD', NamThu:1978, ChieuDai:238},
+      {Mid:'0005', Sid:'TK', NamThu:1958, ChieuDai:312},
+      {Mid:'0005', Sid:'TN', NamThu:1960, ChieuDai:298},
+      {Mid:'0004', Sid:'QH', NamThu:1962, ChieuDai:280},
+      {Mid:'0005', Sid:'QH', NamThu:1965, ChieuDai:315},
+      {Mid:'0007', Sid:'KL', NamThu:1968, ChieuDai:264},
+    ]
+  }
+};
+
+const LINKS = [
+  {from:'BanNhac',  to:'NhacSi',  fk:'Aid',     color:'#ffc93c', rel:'N:1'},
+  {from:'BanNhac',  to:'TheLoai', fk:'Gid',     color:'#22e8ff', rel:'N:1'},
+  {from:'BanNhac',  to:'Album',   fk:'AlbumId', color:'#ff7ec7', rel:'N:1'},
+  {from:'BanThuAm', to:'BanNhac', fk:'Mid',     color:'#b89aff', rel:'N:1'},
+  {from:'BanThuAm', to:'CaSi',    fk:'Sid',     color:'#3fdfaa', rel:'N:1'},
+];
+
+const positions = {
+  NhacSi:   {x:20,  y:20},
+  CaSi:     {x:520, y:20},
+  TheLoai:  {x:270, y:20},
+  Album:    {x:270, y:320},
+  BanNhac:  {x:20,  y:300},
+  BanThuAm: {x:520, y:300},
+};
+
+let activeRow=null, activeTable=null, activeTab='query', activeQuery=null;
+let dragging=null, dragOffX=0, dragOffY=0, currentHL=null;
+
+// ═══════════════════════════════════════════════
+// BUILD TABLE CARDS
+// ═══════════════════════════════════════════════
+function buildTables() {
+  const canvas = document.getElementById('canvas');
+  for (const [tname, tdata] of Object.entries(DB)) {
+    const div = document.createElement('div');
+    div.className = 'table-card';
+    div.id = 'tbl-'+tname;
+    div.style.left = positions[tname].x+'px';
+    div.style.top  = positions[tname].y+'px';
+
+    // Header
+    const hdr = document.createElement('div');
+    hdr.className = 'table-header th-'+tdata.color;
+    hdr.innerHTML = `<span class="tbl-icon">${tdata.icon}</span>
+      <span class="tbl-name">${tdata.label}</span>
+      <span class="row-count">${tdata.rows.length} rows</span>`;
+    div.appendChild(hdr);
+
+    // Column header
+    const colHdr = document.createElement('div');
+    colHdr.className = 'col-header-row';
+    tdata.cols.forEach(c => {
+      const item = document.createElement('div');
+      item.className = 'col-head-item';
+      let badges = '';
+      if (c.pk && c.fk) badges += '<span class="badge pkfk">PK+FK</span>';
+      else if (c.pk) badges += '<span class="badge pk">PK</span>';
+      else if (c.fk) badges += '<span class="badge fk">FK</span>';
+      item.innerHTML = badges + `<span title="${c.desc||''}">${c.name}</span>`;
+      colHdr.appendChild(item);
+    });
+    div.appendChild(colHdr);
+
+    // Data rows
+    tdata.rows.forEach((row, ri) => {
+      const rowDiv = document.createElement('div');
+      rowDiv.className = 'table-row';
+      rowDiv.id = `row-${tname}-${ri}`;
+      tdata.cols.forEach(c => {
+        const span = document.createElement('span');
+        const val = String(row[c.name]);
+        span.className = 'cell-val' + (c.pk && !c.fk ? ' pk-val' : c.fk ? ' fk-val' : '');
+        span.textContent = val.length > 14 ? val.slice(0,13)+'…' : val;
+        span.title = val;
+        rowDiv.appendChild(span);
+      });
+      rowDiv.addEventListener('click', () => selectRow(tname, ri));
+      div.appendChild(rowDiv);
+    });
+
+    canvas.appendChild(div);
+
+    hdr.addEventListener('mousedown', e => {
+      dragging = div; dragOffX = e.clientX - div.offsetLeft; dragOffY = e.clientY - div.offsetTop;
+      div.style.zIndex = 99; e.preventDefault();
+    });
+    hdr.addEventListener('touchstart', e => {
+      const t = e.touches[0]; dragging = div;
+      dragOffX = t.clientX - div.offsetLeft; dragOffY = t.clientY - div.offsetTop;
+      e.preventDefault();
+    }, {passive:false});
+  }
+
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', () => { if(dragging){dragging.style.zIndex='';dragging=null;} });
+  document.addEventListener('touchmove', e => { if(dragging){onDrag(e.touches[0]);e.preventDefault();} }, {passive:false});
+  document.addEventListener('touchend', () => { if(dragging){dragging.style.zIndex='';dragging=null;} });
+  drawConnectors();
+}
+
+function onDrag(e) {
+  if (!dragging) return;
+  const cr = document.getElementById('canvas').getBoundingClientRect();
+  let nx = Math.max(0, Math.min(e.clientX - dragOffX, cr.width  - dragging.offsetWidth));
+  let ny = Math.max(0, Math.min(e.clientY - dragOffY, cr.height - dragging.offsetHeight));
+  dragging.style.left = nx+'px'; dragging.style.top = ny+'px';
+  drawConnectors(currentHL);
+}
+
+// ═══════════════════════════════════════════════
+// CONNECTORS
+// ═══════════════════════════════════════════════
+function getBestEdge(a, b) {
+  const ac = { x: a.offsetLeft + a.offsetWidth/2, y: a.offsetTop + a.offsetHeight/2 };
+  const bc = { x: b.offsetLeft + b.offsetWidth/2, y: b.offsetTop + b.offsetHeight/2 };
+  const dx = bc.x - ac.x, dy = bc.y - ac.y;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    return dx > 0
+      ? { from:{x:a.offsetLeft+a.offsetWidth,y:ac.y}, to:{x:b.offsetLeft,y:bc.y} }
+      : { from:{x:a.offsetLeft,y:ac.y}, to:{x:b.offsetLeft+b.offsetWidth,y:bc.y} };
+  } else {
+    return dy > 0
+      ? { from:{x:ac.x,y:a.offsetTop+a.offsetHeight}, to:{x:bc.x,y:b.offsetTop} }
+      : { from:{x:ac.x,y:a.offsetTop}, to:{x:bc.x,y:b.offsetTop+b.offsetHeight} };
+  }
+}
+
+function drawConnectors(highlighted) {
+  const svg = document.getElementById('svg-layer');
+  while (svg.children.length > 1) svg.removeChild(svg.lastChild);
+
+  LINKS.forEach(lk => {
+    const a = document.getElementById('tbl-'+lk.from);
+    const b = document.getElementById('tbl-'+lk.to);
+    if (!a || !b) return;
+    const isHL = highlighted && (highlighted.includes(lk.from) || highlighted.includes(lk.to));
+    const {from:p1, to:p2} = getBestEdge(a, b);
+    const mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2;
+    const dx = p2.x-p1.x, dy = p2.y-p1.y;
+    const cx1 = Math.abs(dx)>Math.abs(dy) ? mx : p1.x;
+    const cy1 = Math.abs(dx)>Math.abs(dy) ? p1.y : my;
+    const cx2 = Math.abs(dx)>Math.abs(dy) ? mx : p2.x;
+    const cy2 = Math.abs(dx)>Math.abs(dy) ? p2.y : my;
+    const stroke = isHL ? lk.color : '#253045';
+    const sw = isHL ? 2.5 : 1.2;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', `M${p1.x},${p1.y} C${cx1},${cy1} ${cx2},${cy2} ${p2.x},${p2.y}`);
+    path.setAttribute('fill','none');
+    path.setAttribute('stroke', stroke);
+    path.setAttribute('stroke-width', sw);
+    path.setAttribute('opacity', isHL ? 1 : 0.45);
+    path.setAttribute('marker-end', 'url(#arr-default)');
+    if (!isHL) path.setAttribute('stroke-dasharray','6,4');
+    svg.appendChild(path);
+
+    if (isHL) {
+      const lbg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      const tw = lk.fk.length * 7 + 14;
+      lbg.setAttribute('x',mx-tw/2); lbg.setAttribute('y',my-11);
+      lbg.setAttribute('width',tw); lbg.setAttribute('height',18);
+      lbg.setAttribute('rx',5); lbg.setAttribute('fill','#07111f');
+      lbg.setAttribute('stroke',lk.color); lbg.setAttribute('stroke-width','1.2');
+      svg.appendChild(lbg);
+
+      const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+      lbl.setAttribute('x',mx); lbl.setAttribute('y',my+1);
+      lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('dominant-baseline','middle');
+      lbl.setAttribute('font-size','10'); lbl.setAttribute('fill',lk.color);
+      lbl.setAttribute('font-family','IBM Plex Mono,monospace'); lbl.setAttribute('font-weight','700');
+      lbl.textContent = lk.fk;
+      svg.appendChild(lbl);
+
+      // Cardinality
+      const parts = lk.rel.split(':');
+      [[p1,parts[0],dx,dy,1],[p2,parts[1],-dx,-dy,-1]].forEach(([pt,lbl2,ddx,ddy]) => {
+        const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+        t.setAttribute('x', pt.x + (Math.abs(ddx)>Math.abs(ddy) ? (ddx>0?12:-12) : 0));
+        t.setAttribute('y', pt.y + (Math.abs(ddy)>Math.abs(ddx) ? (ddy>0?14:-6) : -8));
+        t.setAttribute('font-size','10'); t.setAttribute('fill',lk.color);
+        t.setAttribute('font-family','IBM Plex Mono,monospace'); t.setAttribute('font-weight','700');
+        t.setAttribute('text-anchor','middle');
+        t.textContent = lbl2;
+        svg.appendChild(t);
+      });
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// HIGHLIGHTS
+// ═══════════════════════════════════════════════
+function clearHighlights() {
+  document.querySelectorAll('.table-row').forEach(r => r.classList.remove('active-row'));
+  document.querySelectorAll('.table-card').forEach(c => c.classList.remove('selected','highlighted'));
+  currentHL = null;
+}
+
+// ═══════════════════════════════════════════════
+// ROW SELECTION — CHI TIẾT
+// ═══════════════════════════════════════════════
+function selectRow(tname, ri) {
+  clearHighlights();
+  activeTable = tname; activeRow = ri; activeQuery = null;
+  document.querySelectorAll('.query-btn').forEach(b => b.classList.remove('active-btn'));
+  const row = DB[tname].rows[ri];
+  document.getElementById(`row-${tname}-${ri}`).classList.add('active-row');
+  document.getElementById('tbl-'+tname).classList.add('selected');
+
+  let sql='', explain='', steps=[], relTables=[tname], result=null, resCols=[], hlNote='';
+
+  if (tname === 'NhacSi') {
+    const songs = DB.BanNhac.rows.filter(r => r.Aid === row.Aid);
+    relTables = ['NhacSi','BanNhac'];
+    document.getElementById('tbl-BanNhac').classList.add('highlighted');
+    songs.forEach(s => {
+      const idx = DB.BanNhac.rows.findIndex(r => r.Mid === s.Mid);
+      if (idx>=0) document.getElementById(`row-BanNhac-${idx}`).classList.add('active-row');
+    });
+    sql = `<span class="kw">SELECT</span> <span class="col">BN.Mid</span>, <span class="col">BN.TenBN</span>, <span class="col">BN.NamST</span>
+<span class="kw">FROM</span>   <span class="tbl">BanNhac</span> BN
+  <span class="kw">JOIN</span>   <span class="tbl">NhacSi</span> NS <span class="kw">ON</span> <span class="col">BN.Aid</span> = <span class="col">NS.Aid</span>
+<span class="kw">WHERE</span>  <span class="col">NS.Aid</span> = <span class="str">${row.Aid}</span>;
+<span class="cmt">-- Lấy tất cả bài của: ${row.TenNS}</span>`;
+    explain = `<strong>${row.TenNS}</strong> (Aid=<strong>${row.Aid}</strong>) sáng tác <strong>${songs.length}</strong> bài nhạc được lưu trong hệ thống.<br><br>
+📌 <strong>Cách hoạt động:</strong> Mỗi bản nhạc trong <em>BanNhac</em> có cột <em>Aid</em> (khoá ngoại) ghi lại "bài này do nhạc sĩ nào viết". Ta so khớp <em>BanNhac.Aid = NhacSi.Aid</em> để tìm ra bài.<br><br>
+${songs.map(s=>`<span class="eg-tag">🎹 ${s.TenBN} (${s.NamST})</span>`).join(' ')}`;
+    steps = [
+      {icon:'🔑', title:`Nhận diện khoá chính (PK)`, text:`Bạn chọn nhạc sĩ <strong>${row.TenNS}</strong>, có <code class="code-inline">Aid = ${row.Aid}</code>. Đây là giá trị PK định danh duy nhất trong bảng NhacSi.`},
+      {icon:'🔗', title:'Tra khoá ngoại (FK) trong BanNhac', text:`Bảng BanNhac có cột <code class="code-inline">Aid</code> là khoá ngoại (FK). Mỗi bản nhạc ghi số Aid của nhạc sĩ đã sáng tác ra nó — giống như "tem tác giả".`},
+      {icon:'⚙️', title:'Thực hiện INNER JOIN', text:`Lệnh <code class="code-inline">JOIN ... ON BN.Aid = NS.Aid</code> khớp mọi hàng BanNhac có cùng Aid=${row.Aid} với bảng NhacSi. Chỉ các hàng thoả điều kiện mới xuất hiện trong kết quả.`},
+      {icon:'🎯', title:'WHERE lọc đúng nhạc sĩ', text:`Câu lệnh <code class="code-inline">WHERE NS.Aid = ${row.Aid}</code> đảm bảo chỉ lấy bài của <strong>${row.TenNS}</strong>, không lẫn với nhạc sĩ khác.`},
+      {icon:'📋', title:`Kết quả: ${songs.length} bản nhạc`, text:`Tìm thấy ${songs.map(s=>'"'+s.TenBN+'"').join(', ')}.`},
+    ];
+    hlNote = `Các hàng <span style="color:var(--green);font-weight:700;">xanh lá</span> trong BanNhac là bài nhạc của <strong>${row.TenNS}</strong>.`;
+    result = songs.map(s => [s.Mid, s.TenBN, s.NamST, DB.TheLoai.rows.find(t=>t.Gid===s.Gid)?.TenTL||'?']);
+    resCols = ['Mid','Tên bản nhạc','Năm ST','Thể loại'];
+
+  } else if (tname === 'CaSi') {
+    const recs = DB.BanThuAm.rows.filter(r => r.Sid === row.Sid);
+    const songs = recs.map(r => DB.BanNhac.rows.find(b => b.Mid===r.Mid)).filter(Boolean);
+    relTables = ['CaSi','BanThuAm','BanNhac'];
+    document.getElementById('tbl-BanThuAm').classList.add('highlighted');
+    document.getElementById('tbl-BanNhac').classList.add('highlighted');
+    recs.forEach(t => {
+      const idx = DB.BanThuAm.rows.findIndex(r => r.Mid===t.Mid && r.Sid===t.Sid);
+      if (idx>=0) document.getElementById(`row-BanThuAm-${idx}`).classList.add('active-row');
+    });
+    songs.forEach(s => {
+      const idx = DB.BanNhac.rows.findIndex(r => r.Mid===s.Mid);
+      if (idx>=0) document.getElementById(`row-BanNhac-${idx}`).classList.add('active-row');
+    });
+    sql = `<span class="kw">SELECT</span> <span class="col">BN.TenBN</span>, <span class="col">BTA.NamThu</span>, <span class="col">BTA.ChieuDai</span>
+<span class="kw">FROM</span>   <span class="tbl">BanThuAm</span> BTA
+  <span class="kw">JOIN</span>   <span class="tbl">CaSi</span>    CS  <span class="kw">ON</span> <span class="col">BTA.Sid</span> = <span class="col">CS.Sid</span>
+  <span class="kw">JOIN</span>   <span class="tbl">BanNhac</span> BN  <span class="kw">ON</span> <span class="col">BTA.Mid</span> = <span class="col">BN.Mid</span>
+<span class="kw">WHERE</span>  <span class="col">CS.Sid</span> = <span class="str">'${row.Sid}'</span>;
+<span class="cmt">-- Bài ca sĩ ${row.TenCS} đã thu âm</span>`;
+    explain = `<strong>${row.TenCS}</strong> (Sid=<strong>${row.Sid}</strong>) đã thu âm <strong>${recs.length}</strong> bản.<br><br>
+📌 <strong>Quan hệ N-N:</strong> Một ca sĩ thu nhiều bài, một bài có nhiều ca sĩ thu → cần bảng trung gian <em>BanThuAm</em>.<br><br>
+${songs.map(s=>`<span class="eg-tag">🎹 ${s.TenBN}</span>`).join(' ')}`;
+    steps = [
+      {icon:'🎤', title:`Ca sĩ: ${row.TenCS} (Sid=${row.Sid})`, text:`Bạn chọn ca sĩ với <code class="code-inline">Sid = '${row.Sid}'</code> là PK trong bảng CaSi.`},
+      {icon:'💿', title:'Bảng trung gian BanThuAm', text:`BanThuAm lưu mỗi lần thu âm. Ta tìm tất cả hàng có <code class="code-inline">BTA.Sid = '${row.Sid}'</code> → thấy ${recs.length} lần thu âm.`},
+      {icon:'🔗', title:'JOIN BanNhac để lấy tên bài', text:`Mỗi hàng BanThuAm có <code class="code-inline">Mid</code>, ta JOIN với BanNhac để lấy tên thay vì chỉ hiện mã số.`},
+      {icon:'📋', title:`Kết quả: ${recs.length} bản thu âm`, text:songs.map(s=>`"${s.TenBN}"`).join(', ')},
+    ];
+    hlNote = `BanThuAm chứa <strong>${recs.length} hàng</strong> ghi lại lịch sử thu âm của <strong>${row.TenCS}</strong>.`;
+    result = recs.map(r => {
+      const s = DB.BanNhac.rows.find(b=>b.Mid===r.Mid);
+      return [r.Mid, s?s.TenBN:'?', r.NamThu, r.ChieuDai+'s'];
+    });
+    resCols = ['Mid','Tên bản nhạc','Năm thu','Chiều dài'];
+
+  } else if (tname === 'TheLoai') {
+    const songs = DB.BanNhac.rows.filter(r => r.Gid === row.Gid);
+    relTables = ['TheLoai','BanNhac'];
+    document.getElementById('tbl-BanNhac').classList.add('highlighted');
+    songs.forEach(s => {
+      const idx = DB.BanNhac.rows.findIndex(r => r.Mid === s.Mid);
+      if(idx>=0) document.getElementById(`row-BanNhac-${idx}`).classList.add('active-row');
+    });
+    sql = `<span class="kw">SELECT</span> <span class="col">BN.TenBN</span>, <span class="col">NS.TenNS</span>, <span class="col">BN.NamST</span>
+<span class="kw">FROM</span>   <span class="tbl">BanNhac</span> BN
+  <span class="kw">JOIN</span>   <span class="tbl">TheLoai</span> TL <span class="kw">ON</span> <span class="col">BN.Gid</span> = <span class="col">TL.Gid</span>
+  <span class="kw">JOIN</span>   <span class="tbl">NhacSi</span>  NS <span class="kw">ON</span> <span class="col">BN.Aid</span> = <span class="col">NS.Aid</span>
+<span class="kw">WHERE</span>  <span class="col">TL.Gid</span> = <span class="str">${row.Gid}</span>
+<span class="kw">ORDER BY</span> <span class="col">BN.NamST</span>;`;
+    explain = `Thể loại <strong>"${row.TenTL}"</strong> (Gid=${row.Gid}) — "${row.MoTa}"<br><br>Có <strong>${songs.length}</strong> bản nhạc thuộc thể loại này.<br><br>${songs.map(s=>`<span class="eg-tag">🎹 ${s.TenBN}</span>`).join(' ')}`;
+    steps = [
+      {icon:'🎼', title:`Thể loại: ${row.TenTL} (Gid=${row.Gid})`, text:`PK của TheLoai. Mỗi thể loại có Gid duy nhất.`},
+      {icon:'🔗', title:'FK BanNhac.Gid → TheLoai.Gid', text:`Mỗi bản nhạc trong BanNhac có cột Gid cho biết "bài này thuộc thể loại nào". Ta lọc <code class="code-inline">BN.Gid = ${row.Gid}</code>.`},
+      {icon:'🎵', title:'JOIN thêm NhacSi', text:`Để hiện tên nhạc sĩ thay vì mã Aid, ta JOIN thêm bảng NhacSi.`},
+      {icon:'📋', title:`${songs.length} bản nhạc thuộc "${row.TenTL}"`, text:songs.map(s=>`"${s.TenBN}" (${s.NamST})`).join(', ')},
+    ];
+    hlNote = `Các hàng <span style="color:var(--green);font-weight:700;">xanh lá</span> trong BanNhac có <strong>Gid = ${row.Gid}</strong> thuộc "${row.TenTL}".`;
+    result = songs.map(s => [s.Mid, s.TenBN, DB.NhacSi.rows.find(n=>n.Aid===s.Aid)?.TenNS||'?', s.NamST]);
+    resCols = ['Mid','Tên bản nhạc','Nhạc sĩ','Năm ST'];
+
+  } else if (tname === 'Album') {
+    const songs = DB.BanNhac.rows.filter(r => r.AlbumId === row.AlbumId);
+    relTables = ['Album','BanNhac'];
+    document.getElementById('tbl-BanNhac').classList.add('highlighted');
+    songs.forEach(s => {
+      const idx = DB.BanNhac.rows.findIndex(r => r.Mid === s.Mid);
+      if(idx>=0) document.getElementById(`row-BanNhac-${idx}`).classList.add('active-row');
+    });
+    sql = `<span class="kw">SELECT</span> <span class="col">BN.TenBN</span>, <span class="col">NS.TenNS</span>, <span class="col">BN.NamST</span>
+<span class="kw">FROM</span>   <span class="tbl">BanNhac</span> BN
+  <span class="kw">JOIN</span>   <span class="tbl">Album</span>  AL <span class="kw">ON</span> <span class="col">BN.AlbumId</span> = <span class="col">AL.AlbumId</span>
+  <span class="kw">JOIN</span>   <span class="tbl">NhacSi</span> NS <span class="kw">ON</span> <span class="col">BN.Aid</span>     = <span class="col">NS.Aid</span>
+<span class="kw">WHERE</span>  <span class="col">AL.AlbumId</span> = <span class="str">${row.AlbumId}</span>;`;
+    explain = `Album <strong>"${row.TenAlbum}"</strong> (${row.NamPhatHanh}) — ${row.NhaXB}<br><br>Gồm <strong>${songs.length}</strong> bản nhạc.`;
+    steps = [
+      {icon:'💽', title:`Album: ${row.TenAlbum}`, text:`AlbumId = ${row.AlbumId} là PK. Album này do ${row.NhaXB} phát hành năm ${row.NamPhatHanh}.`},
+      {icon:'🔗', title:'FK BanNhac.AlbumId → Album.AlbumId', text:`Mỗi bản nhạc ghi AlbumId để biết "bài này nằm trong album nào". Ta lọc BN.AlbumId = ${row.AlbumId}.`},
+      {icon:'📋', title:`${songs.length} bài trong album`, text:songs.map(s=>`"${s.TenBN}"`).join(', ')},
+    ];
+    hlNote = `Album <strong>"${row.TenAlbum}"</strong> chứa <strong>${songs.length}</strong> bản nhạc (highlighted xanh lá).`;
+    result = songs.map(s => [s.Mid, s.TenBN, DB.NhacSi.rows.find(n=>n.Aid===s.Aid)?.TenNS||'?', s.NamST]);
+    resCols = ['Mid','Tên bản nhạc','Nhạc sĩ','Năm ST'];
+
+  } else if (tname === 'BanNhac') {
+    const nhacsi  = DB.NhacSi.rows.find(r => r.Aid === row.Aid);
+    const theloai = DB.TheLoai.rows.find(r => r.Gid === row.Gid);
+    const album   = DB.Album.rows.find(r => r.AlbumId === row.AlbumId);
+    const recs    = DB.BanThuAm.rows.filter(r => r.Mid === row.Mid);
+    const singers = recs.map(r => DB.CaSi.rows.find(c=>c.Sid===r.Sid)).filter(Boolean);
+    relTables = ['BanNhac','NhacSi','TheLoai','Album','BanThuAm','CaSi'];
+    ['NhacSi','TheLoai','Album','BanThuAm','CaSi'].forEach(t => {
+      const el = document.getElementById('tbl-'+t);
+      if(el) el.classList.add('highlighted');
+    });
+    recs.forEach(t => {
+      const idx = DB.BanThuAm.rows.findIndex(r=>r.Mid===t.Mid&&r.Sid===t.Sid);
+      if(idx>=0) document.getElementById(`row-BanThuAm-${idx}`)?.classList.add('active-row');
+    });
+    sql = `<span class="kw">SELECT</span>
+  <span class="col">BN.TenBN</span>, <span class="col">NS.TenNS</span>,
+  <span class="col">TL.TenTL</span>, <span class="col">AL.TenAlbum</span>,
+  <span class="fn">GROUP_CONCAT</span>(<span class="col">CS.TenCS</span>) <span class="kw">AS</span> CaSiThuAm
+<span class="kw">FROM</span>   <span class="tbl">BanNhac</span>  BN
+  <span class="kw">JOIN</span>   <span class="tbl">NhacSi</span>   NS  <span class="kw">ON</span> <span class="col">BN.Aid</span>     = <span class="col">NS.Aid</span>
+  <span class="kw">JOIN</span>   <span class="tbl">TheLoai</span>  TL  <span class="kw">ON</span> <span class="col">BN.Gid</span>     = <span class="col">TL.Gid</span>
+  <span class="kw">JOIN</span>   <span class="tbl">Album</span>    AL  <span class="kw">ON</span> <span class="col">BN.AlbumId</span> = <span class="col">AL.AlbumId</span>
+  <span class="kw">LEFT JOIN</span> <span class="tbl">BanThuAm</span> BTA <span class="kw">ON</span> <span class="col">BN.Mid</span>     = <span class="col">BTA.Mid</span>
+  <span class="kw">LEFT JOIN</span> <span class="tbl">CaSi</span>     CS  <span class="kw">ON</span> <span class="col">BTA.Sid</span>    = <span class="col">CS.Sid</span>
+<span class="kw">WHERE</span>  <span class="col">BN.Mid</span> = <span class="str">'${row.Mid}'</span>
+<span class="kw">GROUP BY</span> <span class="col">BN.Mid</span>;`;
+    explain = `Bản nhạc <strong>"${row.TenBN}"</strong> — hồ sơ đầy đủ:<br><br>
+🎵 <strong>Nhạc sĩ:</strong> ${nhacsi?.TenNS||'?'} (Aid=${row.Aid}) <br>
+🎼 <strong>Thể loại:</strong> ${theloai?.TenTL||'?'} (Gid=${row.Gid}) <br>
+💽 <strong>Album:</strong> ${album?.TenAlbum||'?'} (AlbumId=${row.AlbumId}) <br>
+🎤 <strong>Ca sĩ thu âm:</strong> ${singers.length>0?singers.map(s=>s.TenCS).join(', '):'Chưa có'}`;
+    steps = [
+      {icon:'🎹', title:`BanNhac.Mid = '${row.Mid}' — bảng trung tâm`, text:`BanNhac là trung tâm kết nối mọi thứ. Nó có 3 FK trỏ ra: Aid→NhacSi, Gid→TheLoai, AlbumId→Album.`},
+      {icon:'🎵', title:`JOIN NhacSi (Aid = ${row.Aid})`, text:`Aid=${row.Aid} → <strong>${nhacsi?.TenNS||'?'}</strong>. Đây là khoá ngoại cho biết ai sáng tác bài này.`},
+      {icon:'🎼', title:`JOIN TheLoai (Gid = ${row.Gid})`, text:`Gid=${row.Gid} → <strong>${theloai?.TenTL||'?'}</strong>. FK phân loại thể loại nhạc.`},
+      {icon:'💽', title:`JOIN Album (AlbumId = ${row.AlbumId})`, text:`AlbumId=${row.AlbumId} → <strong>${album?.TenAlbum||'?'}</strong>.`},
+      {icon:'💿', title:`LEFT JOIN BanThuAm → CaSi (${singers.length} ca sĩ)`, text:singers.length>0 ? `Đi qua bảng trung gian BanThuAm để tìm ca sĩ: ${singers.map(s=>s.TenCS).join(', ')}.` : 'Chưa có ca sĩ thu âm trong CSDL (LEFT JOIN giữ bài nhạc này).'},
+    ];
+    hlNote = `Bản nhạc "${row.TenBN}" liên kết với <strong>tất cả 5 bảng còn lại</strong> — đây là trung tâm của CSDL.`;
+    result = [[row.Mid, row.TenBN, nhacsi?.TenNS||'?', theloai?.TenTL||'?', album?.TenAlbum||'?', singers.map(s=>s.TenCS).join(', ')||'—']];
+    resCols = ['Mid','Tên bản nhạc','Nhạc sĩ','Thể loại','Album','Ca sĩ thu âm'];
+
+  } else if (tname === 'BanThuAm') {
+    const song   = DB.BanNhac.rows.find(r => r.Mid === row.Mid);
+    const singer = DB.CaSi.rows.find(r => r.Sid === row.Sid);
+    const composer = song ? DB.NhacSi.rows.find(r => r.Aid === song.Aid) : null;
+    relTables = ['BanThuAm','BanNhac','CaSi'];
+    document.getElementById('tbl-BanNhac').classList.add('highlighted');
+    document.getElementById('tbl-CaSi').classList.add('highlighted');
+    const bIdx = DB.BanNhac.rows.findIndex(r=>r.Mid===row.Mid);
+    if(bIdx>=0) document.getElementById(`row-BanNhac-${bIdx}`)?.classList.add('active-row');
+    const cIdx = DB.CaSi.rows.findIndex(r=>r.Sid===row.Sid);
+    if(cIdx>=0) document.getElementById(`row-CaSi-${cIdx}`)?.classList.add('active-row');
+    sql = `<span class="kw">SELECT</span>
+  <span class="col">BN.TenBN</span>   <span class="kw">AS</span> BanNhac,
+  <span class="col">CS.TenCS</span>   <span class="kw">AS</span> CaSi,
+  <span class="col">NS.TenNS</span>   <span class="kw">AS</span> NhacSi,
+  <span class="col">BTA.NamThu</span>, <span class="col">BTA.ChieuDai</span>
+<span class="kw">FROM</span>   <span class="tbl">BanThuAm</span> BTA
+  <span class="kw">JOIN</span>   <span class="tbl">BanNhac</span> BN <span class="kw">ON</span> <span class="col">BTA.Mid</span> = <span class="col">BN.Mid</span>
+  <span class="kw">JOIN</span>   <span class="tbl">CaSi</span>    CS <span class="kw">ON</span> <span class="col">BTA.Sid</span> = <span class="col">CS.Sid</span>
+  <span class="kw">JOIN</span>   <span class="tbl">NhacSi</span>  NS <span class="kw">ON</span> <span class="col">BN.Aid</span>  = <span class="col">NS.Aid</span>
+<span class="kw">WHERE</span>  <span class="col">BTA.Mid</span> = <span class="str">'${row.Mid}'</span>
+  <span class="kw">AND</span>  <span class="col">BTA.Sid</span> = <span class="str">'${row.Sid}'</span>;`;
+    explain = `Bản thu âm: <strong>${singer?.TenCS||'?'}</strong> hát bài <strong>"${song?.TenBN||'?'}"</strong><br><br>
+💡 <strong>Khoá chính kép (Composite PK):</strong> BanThuAm dùng <em>(Mid, Sid)</em> làm khoá chính — một cặp (bài, ca sĩ) chỉ xuất hiện một lần. Ví dụ: Trần Khánh thu "Du kích sông Thao" năm 1956 chỉ có 1 hàng duy nhất.<br><br>
+📅 Năm thu: <strong>${row.NamThu}</strong> — Chiều dài: <strong>${row.ChieuDai}s</strong>`;
+    steps = [
+      {icon:'🔑', title:`Khoá chính kép: Mid='${row.Mid}' + Sid='${row.Sid}'`, text:`Hai cột (Mid, Sid) kết hợp tạo thành PK. Không thể có 2 hàng cùng Mid và Sid — mỗi (bài, ca sĩ) chỉ thu 1 lần.`},
+      {icon:'🔗', title:`FK 1: Mid = '${row.Mid}' → BanNhac`, text:`Tra BanNhac.Mid = '${row.Mid}' → tìm thấy bài <strong>"${song?.TenBN||'?'}"</strong> do ${composer?.TenNS||'?'} sáng tác.`},
+      {icon:'🔗', title:`FK 2: Sid = '${row.Sid}' → CaSi`, text:`Tra CaSi.Sid = '${row.Sid}' → ca sĩ <strong>${singer?.TenCS||'?'}</strong>.`},
+      {icon:'📅', title:'Dữ liệu bản thu', text:`Năm thu: <strong>${row.NamThu}</strong> — Chiều dài: <strong>${row.ChieuDai} giây</strong> (~${Math.floor(row.ChieuDai/60)}p${row.ChieuDai%60}s).`},
+      {icon:'🌐', title:'Vì sao cần bảng trung gian?', text:`Nếu không có BanThuAm: không thể lưu "Trần Khánh thu 3 bài" và "Du kích sông Thao được 2 ca sĩ thu" trong cùng 1 bảng đơn giản.`},
+    ];
+    hlNote = `Hàng này nối <strong>${singer?.TenCS}</strong> ↔ <strong>${song?.TenBN}</strong> — đây là bản ghi thu âm cụ thể năm ${row.NamThu}.`;
+    result = [[song?.TenBN||'?', singer?.TenCS||'?', composer?.TenNS||'?', row.NamThu, row.ChieuDai+'s']];
+    resCols = ['Bản nhạc','Ca sĩ','Nhạc sĩ sáng tác','Năm thu','Chiều dài'];
+  }
+
+  currentHL = relTables;
+  drawConnectors(relTables);
+  renderSidebar(sql, explain, steps, result, resCols, hlNote);
+}
+
+// ═══════════════════════════════════════════════
+// QUERIES
+// ═══════════════════════════════════════════════
+const QUERIES = {
+  join_all: {
+    label: '🔗 JOIN tất cả bảng',
+    sql:`<span class="kw">SELECT</span>
+  <span class="col">NS.TenNS</span>  <span class="kw">AS</span> NhacSi,
+  <span class="col">BN.TenBN</span>  <span class="kw">AS</span> BanNhac,
+  <span class="col">TL.TenTL</span>  <span class="kw">AS</span> TheLoai,
+  <span class="col">AL.TenAlbum</span>,
+  <span class="col">CS.TenCS</span>  <span class="kw">AS</span> CaSi,
+  <span class="col">BTA.NamThu</span>
+<span class="kw">FROM</span>   <span class="tbl">BanNhac</span>  BN
+  <span class="kw">JOIN</span>   <span class="tbl">NhacSi</span>   NS  <span class="kw">ON</span> <span class="col">BN.Aid</span>     = <span class="col">NS.Aid</span>
+  <span class="kw">JOIN</span>   <span class="tbl">TheLoai</span>  TL  <span class="kw">ON</span> <span class="col">BN.Gid</span>     = <span class="col">TL.Gid</span>
+  <span class="kw">JOIN</span>   <span class="tbl">Album</span>    AL  <span class="kw">ON</span> <span class="col">BN.AlbumId</span> = <span class="col">AL.AlbumId</span>
+  <span class="kw">JOIN</span>   <span class="tbl">BanThuAm</span> BTA <span class="kw">ON</span> <span class="col">BN.Mid</span>     = <span class="col">BTA.Mid</span>
+  <span class="kw">JOIN</span>   <span class="tbl">CaSi</span>     CS  <span class="kw">ON</span> <span class="col">BTA.Sid</span>    = <span class="col">CS.Sid</span>;`,
+    explain:`<strong>BanNhac là "trung tâm"</strong> — nó có 3 FK trỏ thẳng ra NhacSi, TheLoai, Album; và kết nối gián tiếp tới CaSi qua BanThuAm.<br><br>
+📌 Mỗi hàng kết quả = 1 sự kiện thu âm: <em>ca sĩ X thu bài Y (của nhạc sĩ Z, thể loại W, trong album V) vào năm N</em>.`,
+    steps:[
+      {icon:'🎹', title:'Bắt đầu từ BanNhac (bảng trung tâm)', text:'BanNhac có 3 FK trực tiếp: Aid (→NhacSi), Gid (→TheLoai), AlbumId (→Album).'},
+      {icon:'🎵', title:'JOIN NhacSi qua Aid', text:'BN.Aid = NS.Aid → lấy tên nhạc sĩ. Ví dụ: Aid=1 → Đỗ Nhuận.'},
+      {icon:'🎼', title:'JOIN TheLoai qua Gid', text:'BN.Gid = TL.Gid → lấy tên thể loại. Ví dụ: Gid=1 → Nhạc cách mạng.'},
+      {icon:'💽', title:'JOIN Album qua AlbumId', text:'BN.AlbumId = AL.AlbumId → lấy tên album.'},
+      {icon:'💿', title:'JOIN BanThuAm → CaSi (2 bước)', text:'BanNhac.Mid = BanThuAm.Mid → rồi BanThuAm.Sid = CaSi.Sid. Hai JOIN này đi qua bảng trung gian.'},
+    ],
+    result:[
+      ['Đỗ Nhuận','Du kích sông Thao','Nhạc CM','Bài ca KCh','Trần Khánh',1956],
+      ['Đỗ Nhuận','Du kích sông Thao','Nhạc CM','Bài ca KCh','Lê Dung',1978],
+      ['Nguyễn TT','Xa khơi','Dân ca','Nhạc Việt TC','Quốc Hương',1962],
+      ['Đỗ Nhuận','VN quê hương','Nhạc CM','Bài ca KCh','Trần Khánh',1958],
+      ['Đỗ Nhuận','VN quê hương','Nhạc CM','Bài ca KCh','Tân Nhân',1960],
+      ['Đỗ Nhuận','VN quê hương','Nhạc CM','Bài ca KCh','Quốc Hương',1965],
+      ['Trịnh CS','Diễm xưa','Trữ tình','Nhạc Việt TC','Khánh Ly',1968],
+    ],
+    cols:['Nhạc sĩ','Bản nhạc','Thể loại','Album','Ca sĩ','Năm thu'],hl:[],
+    relTables:['NhacSi','CaSi','TheLoai','Album','BanNhac','BanThuAm']
+  },
+  find_composer:{
+    label:'🔍 Ai sáng tác?',
+    sql:`<span class="kw">SELECT</span> <span class="col">NS.TenNS</span>, <span class="col">NS.NamSinh</span>
+<span class="kw">FROM</span>   <span class="tbl">NhacSi</span> NS
+  <span class="kw">JOIN</span>   <span class="tbl">BanNhac</span> BN <span class="kw">ON</span> <span class="col">NS.Aid</span> = <span class="col">BN.Aid</span>
+<span class="kw">WHERE</span>  <span class="col">BN.TenBN</span> = <span class="str">'Trường ca sông Lô'</span>;`,
+    explain:`Tra ngược: biết <em>tên bài</em> → tìm <em>nhạc sĩ</em>.<br><br>
+📌 Bước tra: <strong>BanNhac.TenBN</strong> = "Trường ca sông Lô" → lấy <strong>Aid=2</strong> → JOIN NhacSi.Aid=2 → <strong>Văn Cao</strong>.<br><br>
+💡 Đây là truy vấn "tra ngược khoá ngoại": xuất phát từ thông tin bạn biết (tên bài) để tìm thông tin ở bảng khác.`,
+    steps:[
+      {icon:'🔍', title:'Tìm bài trong BanNhac', text:'WHERE TenBN = "Trường ca sông Lô" → tìm thấy hàng có Mid=0002, Aid=2.'},
+      {icon:'🔗', title:'Aid = 2 là khoá ngoại', text:'BanNhac.Aid=2 trỏ về NhacSi.Aid=2. Đây là "đường dẫn" sang bảng NhacSi.'},
+      {icon:'⚙️', title:'JOIN NhacSi ON Aid = 2', text:'Khớp với hàng NhacSi có Aid=2 → Văn Cao, sinh 1923.'},
+      {icon:'📋', title:'Kết quả: Văn Cao (1923)', text:'Nhạc sĩ sáng tác "Trường ca sông Lô" là Văn Cao.'},
+    ],
+    result:[['Văn Cao','1923']],cols:['Nhạc sĩ','Năm sinh'],hl:[0],
+    relTables:['NhacSi','BanNhac']
+  },
+  find_singers:{
+    label:'🎤 Ca sĩ thu âm?',
+    sql:`<span class="kw">SELECT</span> <span class="col">CS.TenCS</span>, <span class="col">BTA.NamThu</span>, <span class="col">BTA.ChieuDai</span>
+<span class="kw">FROM</span>   <span class="tbl">BanNhac</span>  BN
+  <span class="kw">JOIN</span>   <span class="tbl">BanThuAm</span> BTA <span class="kw">ON</span> <span class="col">BN.Mid</span>  = <span class="col">BTA.Mid</span>
+  <span class="kw">JOIN</span>   <span class="tbl">CaSi</span>     CS  <span class="kw">ON</span> <span class="col">BTA.Sid</span>  = <span class="col">CS.Sid</span>
+<span class="kw">WHERE</span>  <span class="col">BN.TenBN</span> = <span class="str">'Du kích sông Thao'</span>;`,
+    explain:`<strong>Quan hệ N-N trong thực tế:</strong><br>
+• "Du kích sông Thao" được <strong>2 ca sĩ</strong> thu âm (Trần Khánh 1956, Lê Dung 1978)<br>
+• Trần Khánh thu âm <strong>3 bài</strong> khác nhau<br><br>
+📌 Không thể lưu thẳng trong 1 bảng → cần BanThuAm làm trung gian. Cách đi: BanNhac → BanThuAm → CaSi.`,
+    steps:[
+      {icon:'🔍', title:'Tìm bài mục tiêu', text:'WHERE TenBN = "Du kích sông Thao" → Mid=\'0001\'.'},
+      {icon:'💿', title:'Bước 1: JOIN BanThuAm ON Mid', text:'BTA.Mid=\'0001\' → tìm 2 hàng: (0001,TK) và (0001,LD). Mỗi hàng = 1 lần thu âm khác nhau.'},
+      {icon:'🎤', title:'Bước 2: JOIN CaSi ON Sid', text:'TK → Trần Khánh (thu 1956, 245s), LD → Lê Dung (thu 1978, 238s).'},
+      {icon:'📋', title:'Kết quả: 2 ca sĩ, quan hệ N-N', text:'Cùng 1 bài nhạc → nhiều ca sĩ thu âm. Đây là bằng chứng của quan hệ N-N.'},
+    ],
+    result:[['Trần Khánh','1956','245s'],['Lê Dung','1978','238s']],
+    cols:['Ca sĩ','Năm thu','Chiều dài'],hl:[0,1],
+    relTables:['CaSi','BanThuAm','BanNhac']
+  },
+  find_by_genre:{
+    label:'🎼 Theo thể loại',
+    sql:`<span class="kw">SELECT</span> <span class="col">BN.TenBN</span>, <span class="col">NS.TenNS</span>, <span class="col">BN.NamST</span>
+<span class="kw">FROM</span>   <span class="tbl">BanNhac</span> BN
+  <span class="kw">JOIN</span>   <span class="tbl">NhacSi</span>  NS <span class="kw">ON</span> <span class="col">BN.Aid</span> = <span class="col">NS.Aid</span>
+  <span class="kw">JOIN</span>   <span class="tbl">TheLoai</span> TL <span class="kw">ON</span> <span class="col">BN.Gid</span> = <span class="col">TL.Gid</span>
+<span class="kw">WHERE</span>  <span class="col">TL.TenTL</span> = <span class="str">'Nhạc cách mạng'</span>
+<span class="kw">ORDER BY</span> <span class="col">BN.NamST</span> <span class="kw">ASC</span>;`,
+    explain:`Lọc bản nhạc theo thể loại. Cần JOIN TheLoai để so tên (vì BanNhac chỉ lưu Gid, không lưu tên).<br><br>
+💡 <strong>Tại sao không lưu tên thể loại thẳng vào BanNhac?</strong> Vì nếu đổi tên "Nhạc cách mạng" thành "Nhạc yêu nước" → phải sửa hàng trăm hàng. Dùng FK + JOIN chỉ cần sửa 1 hàng trong TheLoai.`,
+    steps:[
+      {icon:'🎼', title:'Tìm Gid của thể loại cần lọc', text:'WHERE TL.TenTL = "Nhạc cách mạng" → Gid=1.'},
+      {icon:'🔗', title:'FK BanNhac.Gid = 1', text:'Lọc tất cả BanNhac có Gid=1 → 4 bản nhạc cách mạng.'},
+      {icon:'🎵', title:'JOIN thêm NhacSi', text:'Lấy tên nhạc sĩ qua BN.Aid = NS.Aid.'},
+      {icon:'📋', title:'ORDER BY NamST tăng dần', text:'Sắp xếp từ bài cũ nhất (1947) đến mới nhất (1949).'},
+    ],
+    result:[
+      ['Trường ca sông Lô','Văn Cao','1947'],
+      ['Du kích sông Thao','Đỗ Nhuận','1949'],
+      ['Việt Nam quê hương tôi','Đỗ Nhuận','1949'],
+      ['Tiến về Hà Nội','Văn Cao','1949'],
+    ],
+    cols:['Bản nhạc','Nhạc sĩ','Năm ST'],hl:[],
+    relTables:['BanNhac','NhacSi','TheLoai']
+  },
+  count_per_composer:{
+    label:'📊 Đếm bài / NS',
+    sql:`<span class="kw">SELECT</span>
+  <span class="col">NS.TenNS</span>,
+  <span class="fn">COUNT</span>(<span class="col">BN.Mid</span>) <span class="kw">AS</span> SoBai
+<span class="kw">FROM</span>   <span class="tbl">NhacSi</span> NS
+  <span class="kw">LEFT JOIN</span> <span class="tbl">BanNhac</span> BN <span class="kw">ON</span> <span class="col">NS.Aid</span> = <span class="col">BN.Aid</span>
+<span class="kw">GROUP BY</span> <span class="col">NS.Aid</span>, <span class="col">NS.TenNS</span>
+<span class="kw">ORDER BY</span> SoBai <span class="kw">DESC</span>;`,
+    explain:`<strong>LEFT JOIN</strong> khác INNER JOIN ở chỗ: giữ lại cả nhạc sĩ chưa có bài nào (SoBai=0).<br><br>
+<strong>GROUP BY + COUNT:</strong> gom các hàng cùng nhạc sĩ thành 1 nhóm, rồi đếm số bài.<br><br>
+💡 Nếu dùng INNER JOIN thì nhạc sĩ chưa có bài sẽ <strong>biến mất</strong> khỏi kết quả.`,
+    steps:[
+      {icon:'📊', title:'LEFT JOIN — giữ tất cả nhạc sĩ', text:'LEFT JOIN đảm bảo hiển thị cả NS chưa có bài trong CSDL (SoBai = 0 thay vì biến mất).'},
+      {icon:'⚙️', title:'GROUP BY NS.Aid, NS.TenNS', text:'Gom tất cả hàng có cùng nhạc sĩ thành 1 nhóm. Ví dụ: Đỗ Nhuận có 2 hàng (Mid 0001, 0005) → 1 nhóm.'},
+      {icon:'🔢', title:'COUNT(BN.Mid) — đếm số bài', text:'Đếm số Mid trong mỗi nhóm. COUNT(NULL)=0 nên NS không có bài vẫn hiện SoBai=0.'},
+      {icon:'📋', title:'ORDER BY SoBai DESC — xếp giảm dần', text:'Nhạc sĩ nhiều bài nhất lên đầu.'},
+    ],
+    result:[['Đỗ Nhuận','2'],['Văn Cao','2'],['Hoàng Việt','1'],['Nguyễn Tài Tuệ','1'],['Trịnh Công Sơn','1']],
+    cols:['Nhạc sĩ','Số bài'],hl:[0,1],
+    relTables:['NhacSi','BanNhac']
+  },
+  junction_table:{
+    label:'💿 Hiểu BanThuAm',
+    sql:`<span class="kw">SELECT</span>
+  <span class="col">BTA.Mid</span>, <span class="col">BN.TenBN</span>,
+  <span class="col">BTA.Sid</span>, <span class="col">CS.TenCS</span>,
+  <span class="col">BTA.NamThu</span>, <span class="col">BTA.ChieuDai</span>
+<span class="kw">FROM</span>   <span class="tbl">BanThuAm</span> BTA
+  <span class="kw">JOIN</span>   <span class="tbl">BanNhac</span> BN <span class="kw">ON</span> <span class="col">BTA.Mid</span> = <span class="col">BN.Mid</span>
+  <span class="kw">JOIN</span>   <span class="tbl">CaSi</span>    CS <span class="kw">ON</span> <span class="col">BTA.Sid</span> = <span class="col">CS.Sid</span>
+<span class="kw">ORDER BY</span> <span class="col">BTA.Mid</span>, <span class="col">BTA.Sid</span>;`,
+    explain:`<strong>BanThuAm</strong> = bảng trung gian giải quyết N-N.<br><br>
+📌 <strong>Tại sao cần bảng trung gian?</strong><br>
+• Nếu chỉ có BanNhac + CaSi: không thể biết "ai hát bài nào"<br>
+• Nếu thêm cột CaSi vào BanNhac: mỗi bài chỉ lưu được 1 ca sĩ<br>
+• Giải pháp: BanThuAm với PK kép (Mid, Sid) — mỗi hàng = 1 lần thu âm duy nhất`,
+    steps:[
+      {icon:'💿', title:'BanThuAm — bảng trung gian N-N', text:'Giải quyết quan hệ "nhiều-nhiều" giữa BanNhac và CaSi. PK kép (Mid+Sid) ngăn trùng lặp.'},
+      {icon:'🔗', title:'FK 1: Mid → BanNhac', text:'JOIN BanNhac ON Mid → thay mã "0001" bằng tên "Du kích sông Thao".'},
+      {icon:'🔗', title:'FK 2: Sid → CaSi', text:'JOIN CaSi ON Sid → thay mã "TK" bằng tên "Trần Khánh".'},
+      {icon:'📋', title:'7 bản thu âm = 7 sự kiện độc lập', text:'0001×TK (1956), 0001×LD (1978), 0005×TK (1958)… mỗi hàng là 1 lần thu âm riêng biệt.'},
+    ],
+    result:[
+      ['0001','Du kích sông Thao','TK','Trần Khánh','1956','245s'],
+      ['0001','Du kích sông Thao','LD','Lê Dung','1978','238s'],
+      ['0004','Xa khơi','QH','Quốc Hương','1962','280s'],
+      ['0005','VN quê hương tôi','TK','Trần Khánh','1958','312s'],
+      ['0005','VN quê hương tôi','TN','Tân Nhân','1960','298s'],
+      ['0005','VN quê hương tôi','QH','Quốc Hương','1965','315s'],
+      ['0007','Diễm xưa','KL','Khánh Ly','1968','264s'],
+    ],
+    cols:['Mid','Bản nhạc','Sid','Ca sĩ','Năm thu','Chiều dài'],hl:[],
+    relTables:['BanThuAm','BanNhac','CaSi']
+  }
+};
+
+// ═══════════════════════════════════════════════
+// RENDER FUNCTIONS
+// ═══════════════════════════════════════════════
+function runQuery(qid) {
+  clearHighlights();
+  activeQuery=qid; activeRow=null; activeTable=null;
+  document.querySelectorAll('.query-btn').forEach(b=>b.classList.remove('active-btn'));
+  const btn = document.querySelector(`[data-qid="${qid}"]`);
+  if(btn) btn.classList.add('active-btn');
+  const q = QUERIES[qid];
+  currentHL = q.relTables;
+  drawConnectors(q.relTables);
+  renderSidebar(q.sql, q.explain, q.steps, q.result, q.cols, '');
+}
+
+function renderSidebar(sql,explain,steps,result,resCols,hlNote) {
+  window._sql=sql; window._explain=explain; window._steps=steps;
+  window._result=result; window._cols=resCols; window._hlNote=hlNote||'';
+  const renderers = {query:renderQueryTab,steps:renderStepsTab,schema:renderSchemaTab,result:renderResultTab};
+  (renderers[activeTab]||renderQueryTab)();
+}
+
+function renderQueryTab() {
+  const sc = document.getElementById('sql-content');
+  sc.innerHTML = '';
+  const l1 = div('section-label','Câu lệnh mẫu'); sc.appendChild(l1);
+
+  const btns = div('query-btns');
+  Object.entries(QUERIES).forEach(([qid,q])=>{
+    const b = document.createElement('button');
+    b.className='query-btn'+(activeQuery===qid?' active-btn':'');
+    b.textContent=q.label; b.setAttribute('data-qid',qid);
+    b.addEventListener('click',()=>runQuery(qid));
+    btns.appendChild(b);
+  });
+  sc.appendChild(btns);
+
+  if (window._sql) {
+    const wrap = div('sql-code-wrap');
+    const tag = div('sql-tag','SQL'); wrap.appendChild(tag);
+    const code = div('sql-code'); code.innerHTML=window._sql; wrap.appendChild(code);
+    sc.appendChild(wrap);
+    if(window._explain) {
+      const eb = div('explain-box'); eb.innerHTML=window._explain; sc.appendChild(eb);
+    }
+    if(window._hlNote) {
+      const hn = div('hl-note'); hn.innerHTML=window._hlNote; sc.appendChild(hn);
+    }
+  } else {
+    const es = div('empty-state');
+    es.innerHTML = `<div class="es-icon">👆</div>
+<strong>Nhấn vào một hàng dữ liệu bất kỳ</strong><br>hoặc chọn câu lệnh mẫu ở trên<br>để xem SQL và giải thích chi tiết.
+<div class="hint-list">
+  💡 <strong>Gợi ý bắt đầu:</strong><br>
+  → Nhấn vào <strong>Đỗ Nhuận</strong> trong bảng NhacSi<br>
+  → Nhấn vào <strong>Trần Khánh</strong> trong bảng CaSi<br>
+  → Nhấn vào bảng <strong>BanThuAm</strong> để xem bảng trung gian<br>
+  → Chọn nút <strong>"🔗 JOIN tất cả"</strong> để xem quan hệ toàn bộ
+</div>`;
+    sc.appendChild(es);
+  }
+}
+
+function renderStepsTab() {
+  const sc = document.getElementById('sql-content');
+  sc.innerHTML='';
+  if(!window._steps||!window._steps.length){
+    const es=div('empty-state');
+    es.innerHTML='<div class="es-icon">📖</div><strong>Chọn một thao tác</strong><br>để xem giải thích từng bước chi tiết';
+    sc.appendChild(es); return;
+  }
+  const l=div('section-label','Giải thích từng bước'); sc.appendChild(l);
+  const trace=div('step-trace');
+  window._steps.forEach((step,i)=>{
+    const item=div('step-item');
+    const num=div('step-num',String(i+1)); item.appendChild(num);
+    const content=div('');
+    const title=div('step-title',step.icon+' '+step.title); content.appendChild(title);
+    const text=div('step-text'); text.innerHTML=step.text; content.appendChild(text);
+    item.appendChild(content); trace.appendChild(item);
+  });
+  sc.appendChild(trace);
+  if(window._explain){
+    const l2=div('section-label','Tóm tắt'); l2.style.marginTop='6px'; sc.appendChild(l2);
+    const eb=div('explain-box'); eb.innerHTML=window._explain; sc.appendChild(eb);
+  }
+}
+
+function renderSchemaTab() {
+  const sc = document.getElementById('sql-content');
+  sc.innerHTML='';
+
+  const l1=div('section-label','Quan hệ giữa các bảng (ERD)'); sc.appendChild(l1);
+  const linkData = [
+    {from:'BanNhac',fk:'Aid',to:'NhacSi',rel:'N:1',color:'#ffc93c',
+     desc:'Nhiều bản nhạc do cùng 1 nhạc sĩ sáng tác.',
+     eg:'Aid=1 → cả "Du kích sông Thao" lẫn "VN quê hương tôi" đều do Đỗ Nhuận viết.'},
+    {from:'BanNhac',fk:'Gid',to:'TheLoai',rel:'N:1',color:'#22e8ff',
+     desc:'Nhiều bản nhạc thuộc cùng 1 thể loại.',
+     eg:'Gid=1 → 4 bài thuộc "Nhạc cách mạng".'},
+    {from:'BanNhac',fk:'AlbumId',to:'Album',rel:'N:1',color:'#ff7ec7',
+     desc:'Nhiều bản nhạc trong cùng 1 album.',
+     eg:'AlbumId=3 → cả "Tình ca", "Xa khơi", "Diễm xưa" đều trong "Nhạc Việt tuyển chọn".'},
+    {from:'BanThuAm',fk:'Mid',to:'BanNhac',rel:'N:1',color:'#b89aff',
+     desc:'Nhiều bản thu âm của cùng 1 bài nhạc.',
+     eg:'Mid=0005 → 3 ca sĩ đã thu "Việt Nam quê hương tôi".'},
+    {from:'BanThuAm',fk:'Sid',to:'CaSi',rel:'N:1',color:'#3fdfaa',
+     desc:'Nhiều bản thu âm bởi cùng 1 ca sĩ.',
+     eg:'Sid=TK (Trần Khánh) → thu 2 bài: "Du kích sông Thao" và "VN quê hương tôi".'},
+  ];
+
+  const links = div('erd-links');
+  linkData.forEach(lk=>{
+    const item=div('erd-link-item'); item.style.borderLeft=`3px solid ${lk.color}`;
+    const hdr=div('erd-link-header');
+    hdr.innerHTML=`<span class="erd-from">${lk.from}</span>
+      <span class="erd-arrow">──${lk.fk}──▶</span>
+      <span class="erd-to">${lk.to}</span>
+      <span class="erd-rel-badge" style="background:${lk.color}22;color:${lk.color};border:1px solid ${lk.color}44;">${lk.rel}</span>`;
+    item.appendChild(hdr);
+    const desc=div('erd-desc',lk.desc); item.appendChild(desc);
+    const eg=div('erd-example','📌 Ví dụ: '+lk.eg); item.appendChild(eg);
+    links.appendChild(item);
+  });
+  sc.appendChild(links);
+
+  const l2=div('section-label','Khái niệm cốt lõi'); l2.style.marginTop='4px'; sc.appendChild(l2);
+  const concepts=[
+    {icon:'🔑',title:'Khoá chính (Primary Key — PK)',
+     text:'Giá trị duy nhất để phân biệt từng hàng trong bảng. Không được trùng, không được NULL.',
+     eg:'NhacSi.Aid=1 chỉ có duy nhất 1 nhạc sĩ là Đỗ Nhuận. BanNhac.Mid=\'0001\' chỉ có duy nhất 1 bài.'},
+    {icon:'🔗',title:'Khoá ngoại (Foreign Key — FK)',
+     text:'Cột trong bảng con tham chiếu về PK của bảng cha. Tạo "đường dẫn" để JOIN sang bảng khác.',
+     eg:'BanNhac.Aid=1 → tra về NhacSi.Aid=1 → ra Đỗ Nhuận. Cột Aid trong BanNhac là FK.'},
+    {icon:'1️⃣',title:'Quan hệ 1-N (Một — Nhiều)',
+     text:'1 hàng bảng cha liên kết với nhiều hàng bảng con. Bảng con giữ FK trỏ về bảng cha.',
+     eg:'1 Nhạc sĩ (Aid=1, Đỗ Nhuận) → N Bản nhạc (Mid 0001, 0005). Đỗ Nhuận viết 2 bài.'},
+    {icon:'♾️',title:'Quan hệ N-N (Nhiều — Nhiều)',
+     text:'1 bài có thể có nhiều ca sĩ thu âm, và 1 ca sĩ có thể thu nhiều bài. Giải quyết bằng bảng trung gian.',
+     eg:'"Du kích sông Thao" được Trần Khánh (1956) VÀ Lê Dung (1978) thu → 2 hàng trong BanThuAm.'},
+    {icon:'💿',title:'Bảng trung gian (Junction Table)',
+     text:'BanThuAm với PK kép (Mid, Sid) giải quyết N-N. Mỗi hàng = 1 cặp (bài, ca sĩ) duy nhất. Có thể thêm thuộc tính riêng (NamThu, ChieuDai).',
+     eg:'Hàng (0005, TK): "VN quê hương tôi" + Trần Khánh, thu 1958, dài 312s.'},
+  ];
+  concepts.forEach(c=>{
+    const item=div('concept-item');
+    const hdr=div('concept-header');
+    hdr.innerHTML=`<span class="concept-icon">${c.icon}</span><span class="concept-title">${c.title}</span>`;
+    item.appendChild(hdr);
+    const text=div('concept-text',c.text); item.appendChild(text);
+    const eg=div('concept-example'); eg.innerHTML=`📌 <em>${c.eg}</em>`; item.appendChild(eg);
+    sc.appendChild(item);
+  });
+}
+
+function renderResultTab() {
+  const sc = document.getElementById('sql-content');
+  sc.innerHTML='';
+  if(!window._result){
+    const es=div('empty-state');
+    es.innerHTML='<div class="es-icon">📊</div><strong>Chọn câu lệnh</strong><br>để xem kết quả truy vấn';
+    sc.appendChild(es); return;
+  }
+  const l=div('section-label','Kết quả truy vấn'); sc.appendChild(l);
+  const wrap=div('result-table-wrap');
+  const tbl=document.createElement('table'); tbl.className='result-table';
+  const thead=document.createElement('tr');
+  window._cols.forEach(c=>{const th=document.createElement('th');th.textContent=c;thead.appendChild(th);});
+  tbl.appendChild(thead);
+  const q=activeQuery?QUERIES[activeQuery]:null;
+  window._result.forEach((row,ri)=>{
+    const tr=document.createElement('tr');
+    if(q&&q.hl&&q.hl.includes(ri)) tr.classList.add('hl');
+    row.forEach(cell=>{const td=document.createElement('td');td.textContent=cell;tr.appendChild(td);});
+    tbl.appendChild(tr);
+  });
+  wrap.appendChild(tbl); sc.appendChild(wrap);
+  const meta=div('result-meta',`${window._result.length} hàng được trả về`); sc.appendChild(meta);
+  if(window._hlNote){
+    const hn=div('hl-note'); hn.innerHTML=window._hlNote; sc.appendChild(hn);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// TAB SWITCHER
+// ═══════════════════════════════════════════════
+function switchTab(tab) {
+  activeTab=tab;
+  document.querySelectorAll('.sql-tab').forEach(t=>t.classList.remove('active'));
+  const map={query:0,steps:1,schema:2,result:3};
+  document.querySelectorAll('.sql-tab')[map[tab]]?.classList.add('active');
+  const renderers={query:renderQueryTab,steps:renderStepsTab,schema:renderSchemaTab,result:renderResultTab};
+  (renderers[tab]||renderQueryTab)();
+}
+
+// ═══════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════
+function div(className, text) {
+  const el = document.createElement('div');
+  if(className) el.className = className;
+  if(text !== undefined) el.textContent = text;
+  return el;
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+buildTables();
+setTimeout(()=>{
+  switchTab('schema');
+}, 80);
+</script>
+</body>
+</html>
